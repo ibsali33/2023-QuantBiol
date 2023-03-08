@@ -24,3 +24,6 @@ To get set up for the course you will first need to do one of the following:
 Once you are set up with the R Studio environment, you can download this repository from the homepage by clicking on the green "Code" dropdown button and selecting download zip. To access it in your R studio environment:
 * In Posit.cloud using the "files" tab in the bottom right hand corner of R Studio, select the "upload" button and upload the .zip file.
 * In R Studio Desktop, save the .zip file to your desktop and unzip the file. 
+
+## How to navigate the course
+The course is divided into 10 sessions that build on each other (7 sessions are currently complete). Review the powerpoint slides before attempting the coding sessions. Solutions to the challenges, and examples in the coding portion can be found in the Solutions folder. 
