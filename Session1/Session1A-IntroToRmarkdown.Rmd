@@ -1,0 +1,170 @@
+---
+title: 'Session 1: R Markdown Supplement'
+author: "I. Ali and M. Wells"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+# Introduction to R markdown
+
+R markdown is one of the most common methods for composing R code into a more human readable structure. R markdown (Rmd) uses specific text formatting to automatically make sense of text made for reading and formatting, and chunks of code used for computational analysis. R markdown documents, once they are written, must be "knit" together (see the bar at the top of the Rmd document window). The "knit" button will automatically save the document and compile your text and code into the output that is designated in the top few lines. 
+
+Often when creating reports, or preparing documents with your R code, you will most likely use R markdown. Revisit this document after Sessions 1, 2 and 3 to review some useful tips and tricks before we start using R markdown for all sessions beginning with session 4. By the time you reach the end of the document you should be able to.
+
+1. Recognize some formatting features used in R markdown
+2. Create a code-chunk and write in an R markdown document
+3. Recognize some common R markdown errors
+
+Before continuing, knit the document and compare the output with the content that you see here.
+
+## Formatting text in R markdown. 
+
+As you can see, text can be written directly into the lines of the document without adding quotation marks. R markdown documents allow the author to create a document structure and text in paragraph form. Here you can use the hashtag, or pound (#) symbols are used as heading markers. This is different from an Rsource file, where you must start a line with a "#" if you DO NOT want the text to be read as code.  Other useful modifiers include *italicizing* text by surrounding words with a single asterisk; **Bolding** words using a double asterisk. Or creating `preformatted` text with the `tick` mark (`). You can even type out equations with the dollar sign $x+2=2$.
+
+You can create numbered lists by adding a paragraph before your numbered list.
+
+1. By starting
+2. a new paragraph
+3. and giving it a number
+
+Create a non-numbered bulleted list by adding a single dash or asterisk and space before your item. See formatting below. 
+
+* Item 1 Level 1
+  * Item Level 2
+  * Item Level 2
+
+- Item 2 Level 1
+  - Item Level 2
+    - Item level 3
+
+Code chunks can be treated exactly like the R source files we worked with in sessions 1 through 3. See the code chunk below for an example.
+
+## Formatting Code in R markdown
+
+In order for the computer to recognize code inside an Rmarkdown document, it must be contained within a specific text format. You can create code chunks by including certain characters in the correct arrangement, but using a shortcut or menu to create a code chunk may be faster. Here are some of the approaches you might use to create code chunks:
+
+1. At the top right corner of your R markdown window. There is a green button with the letter C and a green plus symbol. This will insert a code chunk pre-formatted for the programming language that is selected.
+2. Use the "Code" menu button and select "Insert Chunk". This will default to creating a code chunk formatted for R.
+3. Use the shortcut for pc (ctrl+alt+i) or mac (command+option+i). This will insert a code chunk formatted for R.
+4. Copy and paste a code chunk you made previously, then rename it.
+
+Below I have included the basic layout of a code chunk. 
+
+```{r NameOfChunk, echo=FALSE, message=TRUE}
+# Inside the code chunk you must treat it just like an R source file. 
+# You must begin notes or comments with a pound symbol
+# Any text without a pound symbol will be treated as R code. 
+# If the code does not work, the document will fail to knit.
+
+
+```
+
+Notice it starts with three back tick marks followed by an open curly-bracket. Inside the curly brackets you first must indicate which coding language you will use (in this case, R). Then, after a space, you include the name of the code chunk (NameOfChunk). This is important to notice since no two code chunks can have the same name and knitting the document will fail if there are duplicate chunk names. After the name, you can list any features about the code chunk that you can modify separated by commas. In this case I'm showing "echo=FALSE, and message=TRUE". For the most common modifiable features, click the gear symbol at the top of your code chunk. 
+
+Common features that you might use when modifying code chunks include what you find in the table below. Certain features will be shown if you do not specify **not** to show them, this is because they have defaults. Some of the features and their default settings are indicated in the table below.
+
+Feature     | Effect       
+------------|--------------------------
+echo = TRUE    | code is shown in knitted document (default)
+echo = FALSE    | code is not shown in knitted document, but code output is shown
+message = TRUE    | output messages are shown in knitted document (default)
+message = FALSE    | output messages are not shown in knitted document
+error = TRUE    | output errors are shown in knitted document (default)
+error = FALSE    | output errors are not shown in knitted document
+include = TRUE    | code is run when knitting the document (default)
+include = FALSE   | code is NOT run when knitting the document
+
+## Useful coding practices
+
+You will notice that as we are learning the basics for writing code there are certain recommended practices to keep your code easy to read and as reproducible as possible (in the event someone needs to read the code you have written). 
+
+### Set up your coding environment.
+
+The first few practices we should get used to is to clear the global environment, install or load any of the relevant packages you would use for your code. When you use code created within a specific library like `ggplot2` or `dplyr` or any others we will describe in class, you must load the library/package prior to using the command or it will fail. If a package you need is not loaded you will find an error that says "could not find fuction".
+
+```{r chunkname, echo = T}
+# In your first code chunk you can use this line below to clear the environment.
+rm(list=ls())
+
+# Next, load the necessary libraries for you to run your analysis.
+# In this case we have included some data wrangling packages AND two data
+# visualization packages. If any of the packages are not installed, 
+# go ahead and install them using the install.packages() command. 
+
+library(readr) # for importing data
+library(dplyr) # for wrangling/cleaning data
+library(tidyr) # for wrangling/cleaning data
+library(ggplot2) # for plotting data
+library(ggExtra) # extra features for ggplot2
+library(RColorBrewer) # for customizing colors in plots
+```
+
+### Importing data
+
+R Studio has several built in data sets that can be used to practice coding. This includes the `Iris` data set, a data set with flower characteristics that exhibit Mendelian genetic characteristics. There is the `mtcars` data set which includes a list of cars and their features. In this sample R markdown document we load the IRIS data set and the mtcars data set. In session 2 we import data using a data set that is saved locally, and we can importa a data set form an online source. 
+
+```{r setup, }
+# Load the cars data set.
+cars <- mtcars
+
+# Notice we don't need to use read.csv() here R studio has it 
+# pre loaded, but in order to use it you need to create an object 
+# using the assignment operator <- or the single = symbol.
+
+# Loading the iris data set uses the same approach
+iris <- iris
+
+# Use View(mtcars) to see the cars data frame in your window
+# Use str(iris) to reveal structural characteristics of the data frame
+
+```
+
+### Data cleaning
+
+During session 3 we learn about data cleaning. Other terms used for data cleaning include data wrangling and data transformation. Nearly all R commands require a specific data structure or data class in order to function. The process of data cleaning is the process of taking data from it's original form and transforming it into the form required for data processing or visualization. We will be primarily using data frames in this course, and we can transform data frames using the `dplyr` and `tidyr` packages that we loaded earlier.
+
+```{r cleaningcars}
+
+# The code below includes several different data cleaning steps from dplyr
+# strung together with "pipes" which take the output from the previous
+# line and use it as the input for the next line.
+
+# The output of the code below will show the average and standard deviation
+# of the miles per gallon for groups that have the same number of engine
+# cylinders.
+
+MPGvsCylinder <- cars %>% 
+  select(cyl, mpg) %>% # select only the relevant columns
+  rename(Cylinders = cyl) %>% # rename column to make it more human readable
+  group_by(Cylinders) %>% # group by number of cylinders
+  mutate(MPGavg = mean(mpg)) %>% # calculate the mean mpg for each group
+  mutate(MPGsd = sd(mpg)) %>% # calculate the standard deviation for each group
+  distinct(Cylinders, MPGavg, MPGsd) # retain only unique values for the columns listed
+
+# To run a statistical comparison to see if the MPG are significantly different 
+# for cars with different numbers of cylinders, you may need to filter the data
+
+FourCylinders <- cars %>%
+  filter(cyl == 4)
+SixCylinders <- cars %>%
+  filter(cyl == 6)
+EightCylinders <- cars %>%
+  filter(cyl == 8)
+
+# to calculate a one sided t-test to see if four cylinders have a greater mpg
+# than six cylinders we use the following syntax
+t.test(FourCylinders$mpg, SixCylinders$mpg, alternative = "greater")
+
+# to calculate a one sided t-test to see if six cylinders have lesser mpg
+# than eight cylinders we use the following syntax
+t.test(EightCylinders$mpg, SixCylinders$mpg, alternative = "less")
+
+# to calculate a two sided t-test to see if four cylinders have a greater mpg
+# than six cylinders we use the following syntax
+t.test(FourCylinders$mpg, EightCylinders$mpg, alternative = "two.sided")
+
+```
+
+### Including Plots
+
+In session 4 we will cover plotting in detail. Review the Session4-DataVisualization.Rmd document for the many wonderful details relating to plotting.

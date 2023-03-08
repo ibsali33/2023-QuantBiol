@@ -1,0 +1,353 @@
+---
+title: "Session7 Linear Models and Regression"
+author: "I. Ali, M. Wells, A. Gamble"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+# Introduction to Linear Regression
+
+In session 6, we started our deep dive into the "when" and the "how" to apply statistical tests in your research. We offered examples of common statistical tests such as t-testing, ANOVA, and multiple testing. We also have gotten a chance to practice using data visualization tools which we can use in conjunction with statistical tests to better understand our data. 
+
+In this session we will expand further on how to establish and understand relationships between variables and trends. We will focus on the use of linear regression, the statistical tool used to construct linear models, which can teach us how a response occurs from one or more predicting variables. 
+
+By the end of this session you will be able to:
+
+* Calculate a correlation coefficient using the `cor()` command
+* Run a correlation test using `cor.test()` and interpret the results
+* Create a linear model with `lm()` and interpret the results
+
+## Loading Packages
+
+For our lesson, we will need to do some data wrangling and data visualization in conjunction with our statistical tests. We will use the base `stats` package for most of the statistics we will be running
+
+```{r setup, include = T, echo = F}
+rm(list=ls())
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2) 
+library(RColorBrewer)
+library(DescTools) # for convenient statistical summaries
+library(AICcmodavg) # for comparing statistical models
+```
+
+# Background
+
+We are going to be working with another fictional data set, similar to the one we used for data visualization in Session 4. This data set contains information on gene transcription (MeanCounts, representing measurements of mRNA counts per million reads) and two metrics of protein expression (WesternBlotSignal, representing protein signal from quantified western blots), and protein expression measured by Flow cytometry (FlowCytGFPSignal, representing the fluorescence intensity of a GFP-bound. protein). 
+
+Transcription levels are classically easier to measure (measured by RNA sequencing) than protein expression. Western blotting is notoriously difficult to use for quantifying protein expression. In contrast, using a GFP bound protein and quantifying the fluorescence intensity using a flow cytometer can be a more direct approach to quantifying the amount of protein in the cell. For this example, we will assume that translation is not a rate limiting step on gene expression for any of these genes. Here we will test the strength of the correlation between transcription levels and the different methods of measuring protein expression.
+
+## Importing Data
+
+```{r practicedataimport, echo = T}
+
+# Using the read.csv() command import the GeneExpressionData.csv file
+
+ProteinExpressionData <- read.csv("Datasets/ProteinExpressionData.csv", header = TRUE, sep = ",")
+
+```
+
+# Correlations: Analyzing data with lines.
+
+A correlation is a statistical measure of the extent to which two or more variables move in coordination with each other. Correlations can describe simple reltionships among data. They are quantified by a value called the correlation coefficient (R) which ranges from -1 to 1. See the table below describing how the correlation coefficient values are typically interpreted. 
+
+Correlation coefficient (R) | Correlation Type | Strength 
+-------|-------|-------
+Greater than 0.7 | Positive Correlation | Strong 
+Between 0.4 and 0.7 | Positive Correlation | Moderate 
+Between 0 and 0.4 | Positive Correlation | Weak, or Negligible 
+0 | No correlation | None 
+Between 0 and -0.4 | Negative Correlation |  Weak, or Negligible 
+Between -0.4 and -0.7 | Negative Correlation | Moderate 
+Less than -0.7 | Negative Correlation | Strong
+
+Most correlation analysis are depicted on scatter plots or line plots. Remember we used `geom_point()` to create scatter plots and `geom_line()` or `geom_smooth()` to create line plots. The closer the points on your plot fit to a straight line, the closer the correlation coefficient (R) gets to 1. If the slope of the line is positive the R will be positive, and if the slope is negative R will be negative. Often one of the first steps to assessing a correlation is creating a scatterplot of the data to see if the data creates a line. 
+
+Of course, when we are working with biological samples there is a lot of inherent variability. Remember, just because variables correlate with each other, doesn't mean that one may cause the other. Follow up tests need to be done to validate whether variables correlate to one another, or if one causes the other to change. Let's start by creating some plots to view distribution of our sample genes.
+
+## Visualizing data with a linear relationship
+
+In our main example today we are exploring the relationship between measuring transcription expression and measuring protein expression. First, create a plot visualizing the relationship between transcript counts and western blot signal. 
+
+```{r visualassessment, echo = T}
+# Use ggplot to create a scatter plot comparing transcription and protein expression signal measured by western blot
+
+
+
+
+
+
+```
+
+We can see based on our plots that the protein expression as measured by Western Blots is quite noisy. It appears to have some sort of correlation, but the different gene clusters appear to correlate differently. Divide up the groups by cluster to get a better look at their relationships and assess the strength of the correlations for each group. 
+
+## Pearson Correlation
+
+A pearson correlation test is both a descriptive statistic that describes characteristics of the data (like mean, median, standard deviation, etc.), but it can also be used as an inferential statistic which allows us to draw conclusions about the relationship of the variables (like a t-test or ANOVA). To calculate the correlation coefficient you can use the `cor()` function which typically needs three arguments described in bullets below.
+
+* `x = ` -A vector of data for an explanatory variable x (required)
+* `y = ` -A vector of data for an outcome variable y (required)
+* `method = ` -A method to construct the correlation (options include "pearson", "spearman", or "kendall")
+
+By default, `cor()` will assume that the first argument is vector of data to be plotted along the x axis and the second, the second argument a vector plotted along y. The third argument is an optional argument in case you want or need to specify the method for calculating the correlation, the default option is "pearson". 
+
+```{r housekeepingcorrelation, echo = T}
+# create a group for housekeeping genes
+
+
+# plot the housekeeping genes.
+
+
+
+
+
+# calcluate the correlation coefficient
+
+
+
+```
+
+Using our correlation test we see that the correlation coefficient is 0.956 and according to our correlation table above, this is a strong, positive correlation. 
+
+The `cor()` function is limited in that it only shows the correlation coefficient or the `R` value. A correlation test will tell allow us to test a hypothesis about the relationship between the two variables, use the `cor.test()` function with the same arguments. 
+
+The pearson correlation test follows the hypotheses listed below:
+
+* Null hypothesis: there is no linear relationship between the two variables.
+* Alternative hypothesis: there is a linear relationship between the two variables.
+
+For the Pearson test to be valid, the data must follow the following assumptions:
+
+* Data for each variable are independent
+* For small samples (n<30), the two variables should be normally distributed. 
+* Data must not have a curved linear relationship
+
+```{r CorTest1, echo = T}
+
+
+
+
+
+
+```
+## Interpreting `cor.test()` output
+
+`cor.test()` produces a table of information similar to the `t.test()` output. We can focus on the first two lines and the sample estimate at the bottom. In the first line we see the vectors used for the test listing x first, then y. The second line contains the t-value `t = 1.9747`, the degrees of freedom (2-n), and `p-value = 0.05474`. At the bottom, is the correlation value `0.28835`. The t-value is calculated using the following formula $r*\sqrt{n-2}/\sqrt{1-r^2}$, the degrees of freedom is the sample size minus 2. Based on these data, we see a weak positive correlation between transcript counts and protein expression that is not statistically significant. 
+
+What are some biological or technical reasons as to why protein expression measured by western blot might not correlate strongly with the transcript counts?
+
+## Challenge 1A
+
+Use the `cor.test()` function to test the correlation between early gene transcripts and early gene protein expression quantified by flow cytometry. Create a scatterplot of the data with appropriate labels, run a correlation test and include your interpretation of the correlation.
+
+```{r challenge1, echo = T}
+
+# scatterplot
+
+
+
+
+
+# correlation test
+
+
+
+```
+
+Include a brief description of how you would interpret the correlation. 
+
+* There is a strong positive correlation between transcription counts and protein expression measured by flow cytometry.
+
+Why might protein expression measured by flow cytometry have a stronger correlation with gene transcription than expression measured by western blotting?
+
+* To properly quantify protein expression in western blotting it requires careful titration of protein lysates, and the antibodies used to detect the proteins you are trying to visualize. Any variability in these steps might lead to a weaker correlation between gene transcript counts and protein expression.
+* Using a GFP-Fusion protein directly links a visual output with the protein in question and therefore reduces the number of steps it takes to measure protein expression
+
+## Challenge 1B
+
+Using the approaches we learned above, perform a correlation test to see which method of measuring protein expression (western blot or flow cytometry) has a stronger correlation for the late genes.
+
+```{r challenge1b, echo = T}
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+# Both methods for measuring protein expression show a strong and significant correlation between protein expression and transcription.
+
+# Spearman's rank correlation
+
+Spearman's rank correlation is a non-parametric equivalent to Pearson's correlation. It is used to measure the strength and direction of association between two ranked quantitative variables. Spearman's correlation assesses **monotonic relationships (one variable goes up, the other goes up)** whether or not they form a straight line. See Lecture 7 for examples. Spearman's rank correlation coefficient can also be obtained using the `cor()` function or the `cor.test()` function by setting to method to `spearman`.
+
+Our sample data does does not show a non-linear relationship, but we can alter the method of our correlation test to adjust the test. Using `method = "spearman"` will create a rank order for the variables and test to see how the rank of the dependent variable changes relative to the rank of the independent variable. For non-linear relationships the "spearman" test is more appropriate.
+
+```{r spearman, echo = T}
+
+# cor.test() between transcription and western blot signal using pearson method
+
+
+
+# cor.test() function to calculate the correlation coefficient using spearman method
+
+
+
+```
+
+## Interpreting the result
+
+Note that, as Spearman's method is based on ranks, it cannot compute an exact p-value when there are tied values (i.e., when two are more observations are equal). Instead it will produce an estimate `p-value < 2.2e-16`. It also does not calculate a t-value. Instead it produces the Spearman test statistic `S` which is the sum of all the squared rank differences. This value does not tell us much about the data since it is highly dependent on our sample size. Instead we must look to the `rho` value `0.8256` which is the Spearman's test version of the R Value. A value closer to 0 has weak or no correlation, and the closer you get to -1 or 1, the closer you get to a strong negative, or strong positive correlation, respectively. For this data, we can say there is a strong positive correlation between the ranked variables that is statistically significant. 
+
+Notice that the R value for the Pearson correlation is higher than the value for the Spearman test. 
+
+# Linear Regression
+
+A linear regression model describes and explains or predicts the relationship between a dependent variable (aka a response variable) and an independent variable (aka explanatory variable). Regression is different from correlation because it puts variables into equation and thus explains relationship between them. Linear regressions for instance fit the model `Y = a + b * X` to the data. Linear regressions are run under the assumption that the data are normally distributed and have similar variance (also described as homoscedasticity).
+
+Linear regressions are obtained with the `lm()` function, which uses the least square method to calculate a slope that best fits the data. The least squares method creates a line that has the smallest distance between any point and the slope of the line. the distance between the points and the slope are known as `residuals`. The linear regression follows the following hypotheses:
+
+* Null hypothesis: There is no relationship between your independent and dependent variable.
+* Alternative hypothesis: There is a relationship between your independent variable and dependent variable.
+
+When we fit the model `Y = a + b X`, the `lm()` returns an estimate for the intercept (a) and the slope (b), with a confidence interval, as well as the p-value assessing whether these estimates as significantly different from 0. The `lm()` function wants at least two arguments.
+
+* `formula = y ~ x` a formula where y is the dependent variable and x is the independent variable, these must each be vectors.
+* `data = ` a data frame in the global environment from which to draw the variables
+
+Similar to ANOVA, you can assign the `lm()` to an object and use the `summary()` function to get additional details about the model. Using our protein expression data lets practice using `lm()`. We know that our early genes have a weak but not significant correlation between transcription and protein expression when tested by western blot. Let's see what happens when we create a linear model for this data. In our data let's see how well we can use protein expression to predict protein transcription.
+
+```{r lm1, echo = T}
+# lm() function to fit the linear model to the data
+
+
+
+# Use summary to obtain the estimates for the parameters a and b, as well as the p-value
+
+
+```
+## Interpreting `lm()` 
+
+* In the first chunk we can see the call, the code that was run to create the output. 
+* The second chunk we see is the 5 number summary of the residuals (this is the distance between each point and the slope of the line created by the model)
+* The third chunk is a table with the calculated coefficients. 
+(1) In the (Intercept) row we see the estimate of the y intercept `43.949`, standard error for the intercept `8.09`, and the t-value `5.432` where the null hypothesis is that the intercept is = 0, we can see this is highly significant. 
+(2) In the TranscriptionCounts row we have the estimate for the slope `0.02489`, the standard error `0.0126`, and t-value `1.975` where the null hypothesis is that the slope is = 0. 
+* The bottom chunk includes information about the standard error of the residuals, the R-square values, and F-statistic which is used to interpret the overall results of the model. Here we see a p-value of `0.0547` which is not low enough for us to reject the null hypothesis. 
+
+We can conclude that with this data there is no significant relationship between translation measured by western blot, and transcript counts.
+
+## Residual Plots
+
+We have mentioned residual values several times. We have explained that residuals are the distance between any point on the plot and the slope created by the linear model. You can test the quality of your model by creating a residual plot. This plots the residual values with respect to the explanatory variable. The slope of the linear model is shown here as the y-intercept, and the values are plotted relative to the slope.
+
+```{r lm2, echo = T}
+# Plot the residuals to (visually) check that the assumptions are verified
+# Here we use the object created by lm(). Notice what we set as the x and y variables
+# This syntax will pull from the lm() object without requiring a data frame
+
+
+
+
+
+```
+
+## Interpreting the residual plot
+
+You typically want your data points to be randomly dispersed in the residual plot. If there appears to be a pattern, there may be another factor that explains the relationship between the two variables. In this case there does not appear to be a pattern on our residual plot.
+
+# Multiple Regression Models
+
+Another benefit of linear regressions is that you can easily expand them to multivariate models, including several explanatory variables. In this case we can see how the transcription and time impacts protein expression. Perhaps this will create a better model for helping us predict protein expression based on the western blot signal.
+
+```{r lm3, echo = T}
+# Add a gene effect
+
+
+
+
+# Use summary to obtain the estimates for the parameters a and b, as well as the p-value
+
+
+# Plot the residuals to (visually) check that the assumptions are verified
+
+
+
+
+```
+
+When we add in the variable of time, we can see that our model improves substantially. Review the table created from `WesternModel_Time = lm(formula = TranscriptCounts ~ WesternBlotSignal + TimePoint, data = Early)`. The test statistics for the Intercept, WesternBlotSignal and Timepoint are less than our alpha of 0.05. We can conclude that our factoring in our western signal and timepoint we can use our western data to predict the transcript counts. 
+
+## Exercise 2A
+
+Create a linear model investigating the relationship between fluorescence intensity measured by flow cytometry and transcript counts for late genes. Create a plot depicting the residuals.
+
+```{r exercise2a, echo = T}
+
+# Linear model
+
+
+
+# Print summary
+
+
+
+# Plot the residuals to (visually) check that the assumptions are verified
+
+
+
+
+
+```
+
+## Exercise 2B
+
+Include time in your linear model investigating the relationship between fluorescence intensity measured by flow cytometry and transcript counts for late genes. Create a plot depicting the residuals.
+
+```{r exercise2b, echo = T}
+
+# Linear model
+
+
+
+# Print summary
+
+
+
+# Plot the residuals to (visually) check that the assumptions are verified
+
+
+
+
+```
+
+## Conclusion
+
+In this section we have explored the ways in which you can visualize and test lineare relationships between quantitative variables. We did this using correlation testing and linear modeling. There are key similarities and differences between correlation analysis and linear regression modeling that are important to remember. 
+
+Similarities
+
+* Both tell you the direction and strength of the relationship between two variables
+* A negative correlation corresponds to a negative regression slope and vice versa
+
+Differences
+
+* For correlation, X and Y variables are interchageable whereas regression reports how x causes y to change
+* Correlation generates descriptive statistics whereas regression produces an equation that can be used to predict future outcomes
+* Regression attempts to discover causal relationships
+
+In the next section we will see what happens when we have dozens, hundreds or thousands of independent variables to manage. We will learn about dimensionality reduction which we can use to identify principal components that influence overall variability in a data set. 
+
+
+# Sources and Extra Resources
+Source: [Pearson and Spearman Correlation](https://towardsdatascience.com/clearly-explained-pearson-v-s-spearman-correlation-coefficient-ada2f473b8)
+Source: [Linear Modeling and Regression](https://www.mathworks.com/discovery/linear-model.html)
+Source: [Visualization Approaches for Correlation Analysis](https://statsandr.com/blog/correlation-coefficient-and-correlation-test-in-r/)
+

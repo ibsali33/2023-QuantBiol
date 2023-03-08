@@ -1,0 +1,145 @@
+---
+title: "Session 5 - Assignment 1"
+author: "Your Name Here"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+# Assignment 1
+
+Over the last several sessions this course has covered various practical aspects of coding in R. This assignment will give you the chance to practice what you have learned and empower you to search for solutions as you follow the investigation.
+
+Your research team is investigating changes in flight patterns in major cities in Europe. Data for this analysis is available in the [TidyTuesday data repository]( https://github.com/rfordatascience/tidytuesday/tree/master/data/2022/2022-07-12#european-flights). Different groups in the team have been assigned different cities/regions to analyze. You have been assigned three major airports to study: Amsterdam, Frankfurt, and Paris-Charles-de-Gaulle. 
+
+You are tasked with conducting the following analysis on your three assigned airports
+
+* conduct a longitudinal analysis of flight arrivals
+* investigate the **distribution** of flights per day in the final month of data collection in two different ways.
+* use T-tests to assess if there one of the three airports that has had significantly more departures in the last month of data collection.
+
+We have broken down the activity into specific tasks which will be graded. 
+
+## Loading Packages
+
+**Task 1:** Load the necessary packages for your data analysis, and include a note explaining the purpose of the package in 2 to 8 words.
+
+```{r setup, echo = T, message = F }
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr) # data wrangling
+library(ggplot2) # data visualization
+library(RColorBrewer) # adding color to plots
+library(tidyr) # data transformation
+library(lubridate) # working with dates
+library(stringr) # working with text strings
+library(readr) # reading data
+
+```
+
+## Data Import
+
+Data for this analysis is available in the [TidyTuesday data repository]( https://github.com/rfordatascience/tidytuesday/tree/master/data/2022/2022-07-12#european-flights). 
+
+**Task 2:** Using the code provided in the data repository, import the raw data into an object called "flights".
+
+```{r dataimportFlights, echo = T}
+
+flights <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-07-12/flights.csv')
+
+```
+
+## Data Cleaning
+
+**Task 3:** Create a data frame called "BigCityFlights" that includes all flights from Frankfurt, Amsterdam-Schiphol, and Paris-Charles-de-Gaulle.
+
+```{r datacleaning, echo = T}
+
+FrankfurtFlights <- flights %>%
+  filter(APT_NAME == "Frankfurt")
+
+AmsterdamFlights <- flights %>%
+  filter(grepl("Amsterdam", APT_NAME))
+
+ParisFlights <- flights %>%
+  filter(grepl("Paris-Charles", APT_NAME))
+
+BigCityFlights <- bind_rows(FrankfurtFlights, AmsterdamFlights, ParisFlights)
+
+```
+
+## Including Plots
+
+**Task 4:** Calculate the average number of daily arrivals rounded to the tenths place for each month in the data set. 
+
+Hint: use `group_by()` and `summarize()` or `mutate()`
+
+
+```{r calculating, echo=FALSE}
+
+BigCityFlightStats <- BigCityFlights %>%
+  group_by(YEAR, MONTH_NUM, APT_NAME) %>%
+  summarize(AvgArrivals = round(mean(FLT_ARR_1), 1),
+           SdArrivals = round(sd(FLT_ARR_1), 1)) %>%
+  unite("TimePoint", YEAR, MONTH_NUM, sep = "-")
+
+
+```
+
+**Task 5:** Using the data frame you created in **Task 4**, Create a line plot with the average number of daily arrivals from when data collection began until data collection ended. Use color to distinguish between cities on your plot. Use the `labs()` command to include a title, and labels for each of the axes. 
+
+```{r plotting}
+
+ggplot(BigCityFlightStats, aes(x = ym(TimePoint), y = AvgArrivals, color = APT_NAME)) +
+  geom_line() +
+  labs(title = "Average Daily Flight Arrivals",
+       y = "Daily Arrivals",
+       x = "Date",
+       color = "City")
+
+```
+
+**Task 6:** Create a Box Plot and a Violin plot to compare departure distributions between cities for the last month of data collection from your assigned cities. Does any city look like it has outliers?
+
+```{r boxviolinplot}
+
+RecentFlights <- BigCityFlights %>%
+  filter(YEAR == 2022, MONTH_NUM == "05")
+
+ggplot(RecentFlights, aes(x = APT_NAME, y = FLT_DEP_1, fill = APT_NAME)) +
+  geom_boxplot()
+
+ggplot(RecentFlights, aes(x = APT_NAME, y = FLT_DEP_1, fill = APT_NAME)) +
+  geom_violin()
+
+```
+
+Describe the distribution of each city below. 
+
+* 
+* 
+* 
+
+**Task 7:** Use T-tests to test the following hypotheses about the last month of data collection.
+
+**More** flights depart from Amsterdam than Frankfurt
+**More** flights depart from Paris than Frankfurt
+The number of flights departing from Paris **is not equal to** the number of flights departing from Amsterdam.
+
+```{r stattests}
+
+FrankfurtFlights <- RecentFlights %>%
+  filter(APT_NAME == "Frankfurt")
+
+AmsterdamFlights <- RecentFlights %>%
+  filter(grepl("Amsterdam", APT_NAME))
+
+ParisFlights <- RecentFlights %>%
+  filter(grepl("Paris-Charles", APT_NAME))
+
+t.test(FrankfurtFlights$FLT_DEP_1, AmsterdamFlights$FLT_DEP_1, alternative = "less")
+t.test(FrankfurtFlights$FLT_DEP_1, ParisFlights$FLT_DEP_1, alternative = "less")
+t.test(AmsterdamFlights$FLT_DEP_1, ParisFlights$FLT_DEP_1, alternative = "two.sided")
+
+```
+
+
+

@@ -1,0 +1,142 @@
+---
+title: "Session 5 - Assignment 1"
+author: "Your Name Here"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+# Assignment 1
+
+Over the last several sessions this course has covered various practical aspects of coding in R. This assignment will give you the chance to practice what you have learned and empower you to search for solutions as you follow the investigation.
+
+Your research team is investigating changes in flight patterns in major cities in Europe. Data for this analysis is available in the [TidyTuesday data repository]( https://github.com/rfordatascience/tidytuesday/tree/master/data/2022/2022-07-12#european-flights). You have been assigned three major airports to study: Amsterdam, Frankfurt, and Paris-Charles-de-Gaulle. 
+
+You are tasked with conducting the following analysis on your three assigned airports
+
+* create a visualization of flight arrivals since data collection began
+* investigate the **distribution** of flights per day in the final month of data collection in two different ways.
+* use T-tests to assess if there one of the three airports that has had significantly more departures in the last month of data collection.
+
+We have broken down the activity into specific tasks which will be graded. Complete these with your group. Feel free to refer to previous instructional materials to complete the assignment. 
+
+Turning in the assignment: Please knit the Rmd document into a word document and upload the file into the assignments page in bruin learn. Be sure that the code you write shows in the knitted document. If the document does not knit and you are unable to identify why, please submit the document as an .Rmd file.
+
+## Loading Packages
+
+**Task 1:** Load the necessary packages for your data analysis, and include a note explaining the purpose of the package in 2 to 8 words. 1 point.
+
+```{r setup, echo = T, message = F }
+
+
+
+
+
+
+```
+
+## Data Import
+
+Data for this analysis is available in the [TidyTuesday data repository]( https://github.com/rfordatascience/tidytuesday/tree/master/data/2022/2022-07-12#european-flights). 
+
+**Task 2:** Using the code provided in the data repository, import the raw data into an object called "flights". 1 point.
+
+```{r dataimportFlights, echo = T}
+
+
+
+
+```
+
+## Data Cleaning
+
+**Task 3:** Create a data frame called "BigCityFlights" that includes all flights from Frankfurt, Amsterdam-Schiphol, and Paris-Charles-de-Gaulle. 2 points. 
+
+```{r datacleaning, echo = T}
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+## Including Plots
+
+**Task 4:** Calculate the average number of daily arrivals rounded to the tenths place for each month in the data set. 2 points. 
+
+Hint: use `group_by()` and `summarize()` or `mutate()`
+
+
+```{r calculating, echo=FALSE}
+
+
+
+
+
+
+
+
+```
+
+**Task 5:** Using the data frame you created in **Task 4**, Create a line plot with the average number of daily arrivals from when data collection began until data collection ended. Use color to distinguish between cities on your plot. Use the `labs()` command to include a title, and labels for each of the axes. 1 point.
+
+```{r plotting}
+
+
+
+
+
+
+```
+
+**Task 6:** Create a Box Plot and a Violin plot to compare departure distributions between cities for the last month of data collection from your assigned cities. Does any city look like it has outliers? 2 points.
+
+```{r boxviolinplot}
+
+
+
+
+
+
+
+
+```
+
+Describe the distribution of each city below. 
+
+* 
+* 
+* 
+
+**Task 7:** Use T-tests to test the following hypotheses about the last month of data collection. 1 point.
+
+**More** flights depart from Amsterdam than Frankfurt
+**More** flights depart from Paris than Frankfurt
+The number of flights departing from Paris **is not equal to** the number of flights departing from Amsterdam.
+
+```{r stattests}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+
