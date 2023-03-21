@@ -1,0 +1,227 @@
+---
+title: "Session 10 - Assignment 2"
+author: "Please Write Your Name"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+# Assignment 2
+
+You have just joined a lab that is trying to reproduce the single cell RNA seq results published by a research group studying the fetal brain. You were given the R markdown code to continue the work from a previous post-doc and discover that only some of the steps work. Everything else either doesn't make sense, or doesn't run at all and you cant find the paper the data set came from. Follow the tasks below, and refer to the materials from Session 9, or the original [Seurat guided clustering tutorial](https://satijalab.org/seurat/articles/pbmc3k_tutorial.html) to correct and clean this R markdown file. 
+
+Create groups with 3-4 people and complete the tasks described below. Questions that you will need to answer will be marked in bold with two asterisks **like this**. There are 10 tasks in the assignment valued at 1 point each.
+
+Turning in the assignment: Please knit the Rmd document into a word document or PDF and upload the file into the assignments page in bruin learn. **DO NOT FORGET** to add your name next to "author" at the top of the document. **Be sure that the code chunks are visible** in the knitted document. If the document does not knit and you are unable to identify why, please submit the document as an .Rmd file.
+
+## Task 1: Load Libraries
+
+Post-doc notes: So I'm trying to load all the packages for this analysis and I can't seem to get the Seurat package to work. None of the commands are working and for whatever reason half my packages aren't loading. 
+
+```{r setup, include=T}
+rm(list=ls())
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot)
+library(data.table)
+library(pafchwork)
+```
+
+**Correct the code in the setup chunk, and include brief notes describing each of the packages loaded. Describe the changes (1 point):**
+
+
+
+
+
+## Task 2: Import the data
+
+Post-doc notes: Every time I run this chunk it seems like all the data loads for a second and then just disappears. Why the heck does this keep happening?
+
+```{r dataimport, echo = T}
+mat <- fread("Datasets/NowakSubsampled.tsv") 
+meta <- read.table("Datasets/meta.tsv", header=T, sep="\t", as.is=T, row.names=1) 
+genes = mat[,1][[1]] 
+genes = gsub(".+[|]", "", genes) 
+rm(list=ls())
+mat = data.frame(mat[,-1], row.names=genes)
+Nowak <- CreateSeuratObject(counts = mat, project = "brain", meta.data=meta)
+
+```
+
+**Describe what you had to correct in order to get the data import to work (1 point):**
+
+
+
+
+
+
+## Task 3: Quality Control Part 1
+
+Post-doc notes: When I got the dataset, I heard that the authors had already filtered out all the dead cells. The percent.mt should be 0 throughout and I want to double check that it is true... I'm pretty sure at some point I was able to get this to work, but I'm getting some weird "unexpected assignment" error in the first step, and some "no slot" error in the second step.
+
+```{r QCSteps, echo = T}
+# Calculate the percent of Mitochondrial features.
+Nowak[["percent.mt"] <- PercentageFeatureSet(Nowak, pattern = "^MT-")
+
+# Show QC metrics for the first 5 cells
+head(Nowak@metta.data, 5)
+```
+
+**Describe what you had to correct in order to get the percent.mt to show up in the Nowak object (1 point):**
+
+
+
+
+
+
+## Task 4: Quality Control Part 2
+
+Post-doc notes: I was getting the violin plot command to work, but for some reason the number of Features and Counts in the data set are not showing up. At least the mitochondrial data is showing up, so that's working at least.
+
+```{r QCviz, echo = T, fig.height=4, fig.width=7}
+# Visualize QC metrics as a violin plot
+VlnPlot(Nowak, features = c("Feature_RNA", "Count_RNA", "percent.mt"), ncol = 3)
+
+```
+
+**The features and read counts are not showing up. Correct the errors in the commands, to make them show AND describe the distribution of the number of features and counts in the data set (1 point):**
+
+
+
+
+
+
+## Task 5: Quality Control Part 3
+
+Post-doc notes: Okay as soon as I thought things were working for me everything is a mess again. I was able to get the scatter plots to work, but now when I filter to create my filtered object NowakFilter. this thing tells me I have no cells. What the heck is happening?
+
+```{r QCscatter, echo = T}
+
+# FeatureScatter is typically used to visualize feature-feature relationships, but can be used
+# for anything calculated by the object, i.e. columns in object metadata, PC scores etc.
+mitoscatter <- FeatureScatter(Nowak, feature1 = "nCount_RNA", feature2 = "percent.mt")
+featscatter <- FeatureScatter(Nowak, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+mitoscatter + featscatter
+
+# using subset, you complete the filtering step
+NowakFilter <- subset(Nowak, subset = nFeature_RNA < 200 & nFeature_RNA > 2500 & percent.mt < 5)
+
+```
+
+**Describe what you had to correct in the subset command, and the rationale for subsetting in that way (1 point).**
+
+
+
+
+
+## Task 6: Normalize Data and Find Variable Features
+
+Post-doc notes: Apparently a lot of publicly available data sets that are posted are already normalized. So for this I don't need to include the normalization step. The thing is... when I look for variable features, all the gene names seem to overlap. I'm trying to filter on the top 5 genes, but for some reason the `head()` command is giving me a bunch of extra names which I don't want. 
+
+Post-doc notes: On top of that, all the gene names are stacked on top of each other in the plot... I can't read any of this. How is anyone supposed to get this to work?
+
+```{r id.var.features, echo=T, fig.height=4, fig.width=5}
+
+NowakFilter <- FindVariableFeatures(NowakFilter, selection.method = "vst", nfeatures = 2000)
+
+# Identify the 5 most highly variable genes
+top5 <- head(VariableFeatures(NowakFilter), 20)
+top5
+
+# plot variable features with labels
+plot1 <- VariableFeaturePlot(NowakFilter)
+plot2 <- LabelPoints(plot = plot1, points = top5, repel = F)
+
+plot2
+```
+
+**Correct the issue in the `head()`, and plotting commands. Describe what you corrected and list the 5 genes that contribute most to variability in the dataset (1 point):**
+
+
+
+
+
+## Task 7: Scale the data and run PCA
+
+Post-doc notes: Okay, I think I need to keep the code simple and hope for the best. Let me try scaling the data with no extra parameters and see if that works.
+
+```{r scaling, echo = T}
+NowakFilter <- ScaleData(NowakFilter)
+```
+
+Post-doc notes: YES! The scaling seems to work. Now I can run the PCA
+
+```{r PCA, echo = T}
+NowakFilter <- RunPCA(NowakFilter, features = VariableFeatures(object = NowakFilter))
+```
+
+Post-doc notes: Great. I was able to create the plots for the next steps, but I don't remember how to interpret these...
+
+```{r PVAviz, echo = T, fig.height=4, fig.width=5}
+
+# Examine and visualize PCA results a few different ways
+VizDimLoadings(NowakFilter, dims = 1:2, reduction = "pca")
+DimPlot(NowakFilter, reduction = "pca")
+
+```
+
+**Describe how you would interpret the plots created by `VizDimLoadings()` and `DimPlot()` in this step (1 point):**
+
+
+
+
+
+
+## Task 8: Interpreting the Elbow Plot
+
+Post-doc notes: I have the jackstraw plots and dimension heatmaps saved somewhere else, so I don't need to run them again. I remember the ElbowPlot is supposed to help me figure out something I can use for clustering, but I cant remember what...
+
+```{r elbowz, echo = T}
+
+ElbowPlot(NowakFilter)
+
+```
+
+**Describe what the elbow plot is showing, and how you can use it to decide how to run the clustering step (1 point):**
+
+
+
+
+## Task 9: Create a UMAP diagram with correct number of clusters
+
+Post-doc Notes: Someone told me that there were supposed to be 4 or 5 clusters in this subset of the data set, but for some reason my plot has more clusters and none of them make sense. I can't figure out what the issue is.
+
+```{r clustering, echo = T}
+
+NowakFilter <- FindNeighbors(NowakFilter, dims = 1)
+NowakFilter <- FindClusters(NowakFilter, resolution = 0.5)
+
+# If you haven't installed UMAP, you can do so via reticulate::py_install(packages = 'umap-learn')
+# I'm pretty sure this step is working
+NowakFilter <- RunUMAP(NowakFilter, dims = 1:10)
+
+# I'm pretty sure DimPlot is what I use to view the UMAP
+DimPlot(NowakFilter, reduction = "umap", label = T)
+
+```
+
+**Describe the problem in the clustering steps and create a UMAP with clusters that group together (1 point).**
+
+
+
+
+
+## Task 10: Create a t-SNE plot
+
+Post-doc notes: I can't find the code to create the tSNE plot in the Seurat object. We need the t-SNE for our own analysis. 
+
+**Search the web for the Seurat command used to create a t-SNE plot. Write the code in the chunk below (1 point):**
+
+```{r TsNE, echo = T}
+
+# run the t-SNE command using the first 10 dimensions
+
+
+# I'm pretty sure I'm supposed to use DimPlot() to view the tsne plot
+
+
+```
