@@ -1,0 +1,256 @@
+---
+title: "Session 8 - Principal Component Analysis and Dimensionality Reduction"
+author: "I. Ali, M. Wells, A. Gamble"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+# Introduction to Multidimensional Data
+
+So far we have covered a variety of visualization and statistical strategies to characterize individual populations and compare between a small number of populations to assess their relationships. We have introduced t-testing, ANOVA and Dunnett's test to identify differences between groups, and which groups contribute the most to the variability. We have also introduced the theory and statistical strategies to explore and begin to understand linear relationships. 
+
+Biological systems can have thousands of variables that change in different ways to result in many different outcomes. Your standard ANOVA test and linear regression just wont cut it when you are comparing between thousands of changing genes like you might with transcriptomics, proteomics or multiplexed analyses. In these cases it is most appropriate to use statistical tools like principal component analysis and dimensionality reduction to identify sources of variability that have primary or secondary influence on the overall variance in a data set.
+
+By the end of this session you will be able to:
+
+* Use `factoextra` to start a PCA analysis
+* Recognize Scree, Individual and Variable PCA plots
+* Create a heatmap with `pheatmap`
+
+# Setup
+
+In this module, we will use the `tidyverse` for data wrangling, the `ggplot2` package for plotting, and the `factoextra` package for principal component analysis exploration and visualization.
+
+```{r setup, include = FALSE}
+rm(list=ls())
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse) # data formatting 
+library(ggplot2) # plotting
+library(factoextra) # principal component analysis exploration and visualization
+library(pheatmap)
+library(RColorBrewer)
+
+```
+
+# Working with Multidimensional Data
+
+**Multidimensional data** usually refers to data that we want to explore in a space with more than 2 dimensions. Let's imagine a data set containing information about object positions in a 3D space (including longitude `x`, latitude `y`, and altitude `z`). If we are looking at the position of the objects in a kitchen, we would think in a 'multidimensional space'. Certain objects are clustered in groups (e.g., those in the table, those in the pantry, those near the stove). When you cook, various objects from each distinct cluster might move into a new position, and then move back when the meal is finished cooking. When we can only see the distance that any object moved, it can be difficult to create a complete picture of what is happening.
+
+# Background
+
+For this part of the module, we will use the data set presented by H. Tavares and G. Zeller in there [Exploratory analysis of transcriptomics data in R](https://tavareshugo.github.io/data-carpentry-rnaseq) workshop, extracted from the following publication: 
+Leong H.S., Dawson K., Wirth C., Li Y., Connolly Y., Smith D.L., Wilkinson C.R., Miller C.J. 2014 A global non-coding RNA system modulates fission yeast protein levels in response to stress. *Nature Communication* 5:3947 ([doi.org/10.1038/ncomms4947](https://doi.org/10.1038/ncomms4947)).
+
+This data set includes a *subset* of transcriptome data for:
+
+This data set includes a *subset* of transcriptomics data for:
+- Two yeast strains: wild type (“wt”) and atf21del mutant (“mut”),
+- Each has 6 time points of osmotic stress time (0, 15, 30, 60, 120 and 180 minutes)
+- Three replicates for each strain at each time point.
+
+## Data Cleaning
+ 
+We are going to need to "tidy" up the data which we will do with a  `pivot_longer()` step, and we can merge the data with its metadata using `full_join()`. We can pull all the columns that represent a time point or condition
+
+```{r dataimportnclean, echo = T}
+
+# Import the data
+# Transcriptomics data
+TransformedCounts <- read.csv("../Datasets/YeastRNAdata/counts_transformed_subset.csv") 
+
+# metadata
+sample_info <- read.csv("../Datasets/YeastRNAdata/sample_info.csv") # 
+
+# Re-arrange the dataset in a long 'tidy' data set
+TransformedCounts_long <- TransformedCounts %>% 
+  pivot_longer(cols = wt_0_r1:mut_180_r3, 
+               names_to = "sample", 
+               values_to = "counts")
+
+# Add metadata to the transcriptomics data set
+PCAdata <- full_join(TransformedCounts_long, sample_info, by = "sample") 
+```
+
+In this example, we will explore how yeast lineage impacts gene transcription. Let's take a look at the first gene on our list to see what the data looks like. 
+
+```{r data-formatting}
+
+Gene1QCplot <- filter(PCAdata, gene == "SPAC22H10.12c") 
+
+# Have a look at what the data looks like
+ggplot(Gene1QCplot, aes(x = minute, y = counts, color = replicate)) +
+  geom_line() + 
+  geom_point() +
+  facet_grid(strain ~ . )
+
+```
+
+We have too many genes to explore this effect gene by gene (the filtered data set includes 20 genes, but the original data set includes more than 6000 genes). One way to address this question is to look, not at the effect of lineage on gene transcription one by one, but how the transcriptomics profile (including all the genes) is (or is not) clustered across lineages in the 'gene space'. In other words, we are use statistical tools to evaluate all transcriptional changes simultaneously.
+
+# Principal component analysis (PCA)
+
+**Principal component analysis** is a useful tool to explore multidimensional data. In R, we do this with the `prcomp()` function.
+
+```{r PCA}
+
+# First we need a matrix with labeled column and row names
+# Create a matrix from our table of counts
+PCAmatrix <- TransformedCounts %>% 
+  column_to_rownames("gene") %>% 
+  as.matrix() %>% 
+  t() # transpose the matrix so rows = samples & columns = variables
+
+
+# Run the PCA
+YeastPCA <- prcomp(PCAmatrix)
+
+```
+
+## PCA visualizations
+
+Instead of writing a bunch of lines of code to extract and plot relevant information, we can use the functions of the `factoextra` package for PCA exploration and visualization. A number of different plots are produced through a Principal Component Analysis. A **scree plot** is a bar chart that shows the relative contribution of different *factors* (the input variables we are looking at, here genes) to the *observed variance* in the data set. 
+
+The **individual plot** shows the position of each (individual) data point on an *artificial 2D space* defined by artificial axes, or **components**, constructed through the PCA process to capture as much as possible of the variance. Those axes or components are constructs of the input variables (in other words, a 'mixture' of the different variables), based on linear combinations of the input variables. 
+
+Key Plots for PCA
+Plot Name | Command | Notes
+-----|----|------
+Scree Plot | fviz_eig() | Plots *eigenvalues* which are the percent each principal component plays in the overall variability in the population
+Individual Plot | fviz_pca_ind() | Plots all individuals (genes) onto a two dimensional map created from the two primary components identified
+Variable plot | fviz_pca_var() | This plot shows how much an individual contributes to the variability and to which component it contributes.
+
+Lets make the plots!
+
+```{r PCA-visualization}
+
+# Scree plot
+
+
+# Individual plot
+
+
+# Variable plot
+
+
+```
+
+# Scaling 
+
+**Scaling** is a process through which data are **standardized** by taking the z-score of each data point (representing its position in the group). The z-score is calculated as the difference between the point and the mean of the group, divided by the variance within the group.
+
+Scaling is particularly important when working on data of different magnitude, and especially when working on data measured with different units. To perform the scaling, just add an argument to the `prcomp()` command `scale = TRUE`.  Check the scree plot to check to see if the scaling made a difference. 
+
+```{r scaling1}
+
+# Run the scaling and the PCA
+
+
+# Scree plot
+
+
+```
+
+In this case we can see that the scaling influeced how much component 2 contributes to the variability in the data. Create the individual and variable plot for comparison as well.
+
+
+```{r scaling2}
+
+# Individual plot
+
+
+# Variable plot
+
+
+```
+
+PCA are exploratory analyses. They do not allow us to test any null hypothesis. We should thus not expect a p-value from a PCA. However, PCA components can be used in linear models as any other quantitative variable.
+
+## Converting individual plot to `ggplot()`
+
+Notice that our individual plot is starting to look like the clustering diagrams you may have seen in papers. The names of every gene are included in the plot which can be a bit messy
+
+```{r PC-scores}
+
+# Individual plot
+fviz_pca_ind(YeastPCAscaled, repel = TRUE)
+# Let's reproduce this plot using ggplot to make it cleaner
+
+# The PC scores are stored in the "x" value of the prcomp object
+# Extract the data as a data frame
+pc_scores <- as.data.frame(YeastPCAscaled$x) 
+
+# Create a column with the data point identify (here experimental conditions)
+# This information is already stored in the row names of the PC score matrix
+pc_scores$sample <- rownames(pc_scores) 
+# Additional detail: move that new column to the first position
+pc_scores <- pc_scores %>% 
+  relocate(sample)
+
+# Recreate the individual plot using ggplot
+ggplot(pc_scores, aes(x = PC1, y = PC2)) +
+  geom_point()+
+  geom_vline(xintercept = 0, color = "grey")+
+  geom_hline(yintercept = 0, color = "grey")
+
+```
+
+# Clustering
+
+Cluster analysis involves visually grouping your data objects in a way in which objects close together are more similar to each other than objects in other groups. We can see how PCA individual plots cluster individuals that contribute to the overall variability in similar ways. Using this approach you can:
+
+* find patterns or relationships in your data that you did not know existed 
+* confirm patterns you knew were there (a useful quality control approach) 
+* Considered to be an unsupervised learning method
+
+## Creating Heatmaps with `pheatmap()`
+
+Another very common method for visualizing clusters is by using heatmaps and hierarchical clustering. One of the most powerful heatmap building tools is `pheatmap()`. It offers extensive customizability for the heatmaps and ways to fine-tune clustering methods. 
+
+One key difference between `pheatmap()` and ggplot() is that the starting data *needs* to be in the form of a numeric matrix with x values assigned to the rownames and y values assigned to the column names. We can use our PCAmatrix object from earlier to construct the heatmap. 
+
+The only required argument is the Matrix object, in our case, PCAmatrix. In the example below we have included several additional arguments to illustrate the ways in which `pheatmap()` can be modified. Review the bullets below to see how each argument listed impacts the heatmap.
+
+```{r heatmap1, fig.height=7, fig.width=5}
+pheatmap(PCAmatrix, # the only required argument
+         scale = "none",
+         color = colorRampPalette(brewer.pal(9, "Blues"))(50),
+         border_color = "white",
+         cluster_cols = TRUE, # hierarchical clustering of columns
+         cluster_rows = FALSE, # hierarchical clustering of rows
+         fontsize_row = 8, # size of the axis font
+         fontsize_col = 8, # size of the axis font
+         main = "Heatmap of Yeast Gene Expression Grouped by Gene")
+```
+
+* `scale = ` color scale based on "row", "column" or "none"
+* `breaks = ` the number of breaks in the color gradient
+* `kmeans_k = ` the number of kmeans groups among the rows
+* `color = ` modifies the color scale for the pheatmap. Currently it is an RColorBrewer formula that scales the "Blues" color palette into 50 colors.
+* `border_color = ` the border around each heatmap cell
+* `cluster_cols = ` hierarchical clustering of columns TRUE/FALSE
+* `cluster_rows = ` hierarchical clustering of rows TRUE/FALSE
+* `fontsize = ` font size for the whole plot
+* `fontsize_row = ` font size for the row (integer)
+* `fontsize_col = ` font size for the row (integer)
+
+## Challenge
+
+Using our protein expression data from Session 7, create a matrix with gene names as the rows and the time points as the columns and plot with `pheatmap()`. Adjust the components of the plot until time points are in chronological order and the clusters reflect the same clusters as are indicated in the data set.
+
+```{r challenge}
+
+
+
+
+
+```
+
+
+# Summary
+
+In this session we introduced multidimensional data analysis through principal component analysis. We described plotting approach like the Scree plots which visualizes how much variability can be captured by the top 10 principal components. We discussed individual PCA plots which is often how we visualize clustering using PCA. Finally we introduced the variable plot that shows how much each individual contributes to the variability in the sample. We also created heatmaps using `pheatmap()` and experimented with some basic approaches to clustering. 
+
+In our next session we will practice with the Seurat vignette and get a chance to bring all the concepts and visualization strategies together. 
+
+Source: [FactoExtra](https://cran.r-project.org/web/packages/factoextra/readme/README.html)
+Source: [Making pheatmaps, another example](https://davetang.org/muse/2018/05/15/making-a-heatmap-in-r-with-the-pheatmap-package/)
