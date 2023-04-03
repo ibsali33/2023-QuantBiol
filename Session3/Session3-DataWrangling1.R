@@ -152,7 +152,7 @@ BulkRNAseq <- read.csv("../Datasets/Bulk RNAseq/TidyBulkRNAseq.csv", header = TR
 
 # It can be a bit slow and painstaking writing a command for every
 # data cleaning step that you need in a particular workflow. To simplify
-# data cleaning, you can use pipes %>% to push the output of one
+# data cleaning, you can use pipes |> to push the output of one
 # command into the input of the other. Using the same example of the
 # previous section, we can combine the selecting and filtering steps 
 # together with pipes to create an object containing only replicate 2 data.
@@ -260,8 +260,8 @@ BulkRNAseq <- read.csv("../Datasets/Bulk RNAseq/TidyBulkRNAseq.csv", header = TR
 # pulling variable names from "condition", and populate their values from the
 # "Reads" variable. 
 
-SampleGene1 <- BulkRNAseqCleaned %>%
-  filter(GeneID =="ENSG00000000003") %>% # filtering on values for that gene
+SampleGene1 <- BulkRNAseqCleaned |>
+  filter(GeneID =="ENSG00000000003") |> # filtering on values for that gene
   pivot_wider(names_from = Condition, values_from = Reads)
 
 # Now that our data is in the right format, we can call the columns
