@@ -154,13 +154,13 @@ RNAseq_SNaPs <- filter(BulkRNAseqCleaned, Condition == "SNaPs")
 
 # It can be a bit slow and painstaking writing a command for every
 # data cleaning step that you need in a particular workflow. To simplify
-# data cleaning, you can use pipes %>% to push the output of one
+# data cleaning, you can use pipes |> to push the output of one
 # command into the input of the other. Using the same example of the
 # previous section, we can combine the selecting and filtering steps 
 # together with pipes to create an object containing only replicate 2 data.
 
-Replicate2 <- BulkRNAseq %>%
-  select(!X) %>%
+Replicate2 <- BulkRNAseq |>
+  select(!X) |>
   filter(Replicate == 2)
 
 # Since we are using pipes, the dplyr commands already know what data 
@@ -181,8 +181,8 @@ Replicate2 <- BulkRNAseq %>%
 # group the data. We can use the group_by() and mutate() commands together
 # to calculate the average for each group we select. 
 
-MeanCounts <- BulkRNAseq %>%
-  group_by(GeneID, Condition) %>%
+MeanCounts <- BulkRNAseq |>
+  group_by(GeneID, Condition) |>
   mutate(Mean = mean(Reads))
 
 # Using this operation we were able to tell R to group by GeneID and 
@@ -199,9 +199,9 @@ MeanCounts <- BulkRNAseq %>%
 # distinct() function allows you to select on specific columns, and return
 # just the unique values.
 
-MeanCountsDistinct <- BulkRNAseq %>%
-  group_by(GeneID, Condition) %>%
-  mutate(Mean = mean(Reads)+0.0001) %>%
+MeanCountsDistinct <- BulkRNAseq |>
+  group_by(GeneID, Condition) |>
+  mutate(Mean = mean(Reads)+0.0001) |>
   distinct(GeneID, Condition, Mean)
 
 # In order to easily calculate the fold change, we should separate the
@@ -215,9 +215,9 @@ MeanCountsDistinct <- BulkRNAseq %>%
 # argument. In this case we want to pull the names from Condition, and values
 # from Mean. 
 
-FoldChange <- MeanCountsDistinct %>%
-  group_by(GeneID) %>%
-  pivot_wider(names_from = Condition, values_from = Mean) %>%
+FoldChange <- MeanCountsDistinct |>
+  group_by(GeneID) |>
+  pivot_wider(names_from = Condition, values_from = Mean) |>
   mutate(FoldChange = log2(SNaPs/ESCs))
 
 
@@ -260,8 +260,8 @@ FoldChange <- MeanCountsDistinct %>%
 # pulling variable names from "condition", and populate their values from the
 # "Reads" variable. 
 
-SampleGene1 <- BulkRNAseqCleaned %>%
-  filter(GeneID =="ENSG00000000003") %>% # filtering on values for that gene
+SampleGene1 <- BulkRNAseqCleaned |>
+  filter(GeneID =="ENSG00000000003") |> # filtering on values for that gene
   pivot_wider(names_from = Condition, values_from = Reads)
 
 # Now that our data is in the right format, we can call the columns
@@ -315,10 +315,10 @@ wcmatches <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/
 # this data frame, determine which team had the most world cup wins of all
 # time, and how many wins they had. Write the code and result. 
 
-MostWins <- wcmatches %>%
-  filter(outcome != "D") %>%
-  group_by(winning_team) %>%
-  mutate(nWins = length(winning_team)) %>%
+MostWins <- wcmatches |>
+  filter(outcome != "D") |>
+  group_by(winning_team) |>
+  mutate(nWins = length(winning_team)) |>
   distinct(winning_team, nWins) 
 
 # Superstitious Sam thinks the day of the week matters for a "home" team to 
@@ -327,12 +327,12 @@ MostWins <- wcmatches %>%
 # wins per day of the week, the average score for the home team, and maximum
 # score for the home team on games where the home team won. 
 
-BestWinningDay <- wcmatches %>%
-  filter(outcome == "H") %>%
-  group_by(dayofweek) %>%
+BestWinningDay <- wcmatches |>
+  filter(outcome == "H") |>
+  group_by(dayofweek) |>
   mutate(AvgHomeScore = mean(home_score),
          MaxHomeScore = max(home_score),
-         nWins = length(dayofweek)) %>%
+         nWins = length(dayofweek)) |>
   distinct(dayofweek, AvgHomeScore, nWins, MaxHomeScore)
 
 
@@ -342,12 +342,12 @@ BestWinningDay <- wcmatches %>%
 
 # Is the day with the highest average score significantly higher than 
 # any other day of the week?
-SundayGames <- wcmatches %>%
-  filter(outcome == "H") %>%
+SundayGames <- wcmatches |>
+  filter(outcome == "H") |>
   filter(dayofweek == "Sunday")
 
-FridayGames <- wcmatches %>%
-  filter(outcome == "H") %>%
+FridayGames <- wcmatches |>
+  filter(outcome == "H") |>
   filter(dayofweek == "Friday")
 
 t.test(SundayGames$home_score, FridayGames$home_score)
