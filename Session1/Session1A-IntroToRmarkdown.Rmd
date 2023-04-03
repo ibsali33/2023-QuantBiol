@@ -133,22 +133,22 @@ During session 3 we learn about data cleaning. Other terms used for data cleanin
 # of the miles per gallon for groups that have the same number of engine
 # cylinders.
 
-MPGvsCylinder <- cars %>% 
-  select(cyl, mpg) %>% # select only the relevant columns
-  rename(Cylinders = cyl) %>% # rename column to make it more human readable
-  group_by(Cylinders) %>% # group by number of cylinders
-  mutate(MPGavg = mean(mpg)) %>% # calculate the mean mpg for each group
-  mutate(MPGsd = sd(mpg)) %>% # calculate the standard deviation for each group
+MPGvsCylinder <- cars |> 
+  select(cyl, mpg) |> # select only the relevant columns
+  rename(Cylinders = cyl) |> # rename column to make it more human readable
+  group_by(Cylinders) |> # group by number of cylinders
+  mutate(MPGavg = mean(mpg)) |> # calculate the mean mpg for each group
+  mutate(MPGsd = sd(mpg)) |> # calculate the standard deviation for each group
   distinct(Cylinders, MPGavg, MPGsd) # retain only unique values for the columns listed
 
 # To run a statistical comparison to see if the MPG are significantly different 
 # for cars with different numbers of cylinders, you may need to filter the data
 
-FourCylinders <- cars %>%
+FourCylinders <- cars |>
   filter(cyl == 4)
-SixCylinders <- cars %>%
+SixCylinders <- cars |>
   filter(cyl == 6)
-EightCylinders <- cars %>%
+EightCylinders <- cars |>
   filter(cyl == 8)
 
 # to calculate a one sided t-test to see if four cylinders have a greater mpg
