@@ -26,5 +26,5 @@ Once you are set up with the R Studio environment, you can download this reposit
 * In R Studio Desktop, save the .zip file to your desktop and unzip the file. 
 
 ## How to navigate the course
-The course is divided into 10 sessions that build on each other (7 sessions are currently complete). Review the powerpoint slides before attempting the coding sessions. Solutions to the challenges, and examples in the coding portion can be found in the Solutions folder. 
+The course is divided into 10 sessions that build on each other. Review the powerpoint slides before attempting the coding sessions. Solutions to the challenges, and examples in the coding portion can be found in the Solutions folder. 
 Session 9 is copied from the Seurat Guided Clustering Tutorial with minor modifications, the link to the original source is in the lesson.
